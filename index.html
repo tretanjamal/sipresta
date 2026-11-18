@@ -938,10 +938,21 @@
           </div>
       </div>
 
+      <div id="barSiswaTerpilih" class="hidden px-4 py-2.5 bg-indigo-50 border-b border-indigo-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span class="font-bold text-indigo-800"><i class="fas fa-check-square mr-1"></i><span id="jumlahSiswaTerpilih">0</span> siswa dipilih</span>
+          <div class="flex items-center gap-2">
+              <button onclick="downloadKartuSiswaBulk(true)" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-indigo-700 transition transform active:scale-95">
+                  <i class="fas fa-id-card mr-1"></i> Cetak Kartu Terpilih
+              </button>
+              <button onclick="clearSiswaSelection()" class="text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">Batal Pilih</button>
+          </div>
+      </div>
+
       <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
               <thead class="bg-gray-50 text-gray-500 text-[10px] uppercase font-semibold border-b border-gray-200">
                   <tr>
+                      <th class="p-3 text-center w-10"><input type="checkbox" id="chkSiswaAll" onchange="toggleSiswaSelectAll(this.checked)" class="w-4 h-4 cursor-pointer accent-indigo-600" title="Pilih semua hasil filter/pencarian (semua halaman)"></th>
                       <th class="p-3 text-center w-12">No</th>
                       <th class="p-3">Nama Lengkap</th>
                       <th class="p-3 hidden md:table-cell">NISN</th>
@@ -2245,7 +2256,7 @@
     // 0. KONFIGURASI BACKEND GOOGLE APPS SCRIPT (UNTUK HOSTING GITHUB PAGES)
     // ==========================================================================
     // GANTI URL DI BAWAH DENGAN URL WEB APP DEPLOYMENT GOOGLE APPS SCRIPT ANDA
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyRmguLwRxBow-eLM1Q-86X90UGrtuhA6tkr-A5O0Vg5UB7JUhH6jzKmWmUppvKFOzq2A/exec";
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbykjkTy6rK-GwqWrZNJMYeaULwdvRaOCJF1Y5RYOZ5Mxk-ojjxUhA_gFKYMnzYW6MtsiQ/exec";
 
     // Polyfill google.script.run agar dapat berjalan di luar domain Google (GitHub Pages)
     if (typeof google === 'undefined' || !google.script || !google.script.run) {
@@ -4997,7 +5008,7 @@ function loadDataSiswa() {
 
     // --- AMBIL DATA SISWA DENGAN PARAMETER FILTER ---
     // Reset tabel dulu agar terlihat loading
-    document.getElementById('tbody-siswa').innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-500"><i class="fas fa-circle-notch fa-spin mr-2"></i>Memuat data siswa...</td></tr>';
+    document.getElementById('tbody-siswa').innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500"><i class="fas fa-circle-notch fa-spin mr-2"></i>Memuat data siswa...</td></tr>';
     
     // Panggil Backend dengan parameter filterKelas
     google.script.run.withSuccessHandler(result => {
@@ -5013,11 +5024,13 @@ function loadDataSiswa() {
 function renderSiswaRows(data, startIdx) {
         const tbody = document.getElementById('tbody-siswa');
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-gray-400">Data tidak ditemukan.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">Data tidak ditemukan.</td></tr>';
+            updateSiswaSelectionUI();
             return;
         }
         tbody.innerHTML = data.map((siswa, i) => `
         <tr class="hover:bg-gray-50 transition border-b border-gray-50 group">
+            <td class="p-4 text-center"><input type="checkbox" class="chk-siswa w-4 h-4 cursor-pointer accent-indigo-600" ${siswaSelected.has(String(siswa.nisn)) ? 'checked' : ''} onchange="toggleSiswaSelect('${siswa.nisn}', this.checked)"></td>
             <td class="p-4 text-center text-gray-500 text-sm">${startIdx + i + 1}</td>
             <td class="p-4">
                 <div class="flex items-center">
@@ -5044,6 +5057,7 @@ function renderSiswaRows(data, startIdx) {
                 </div>
             </td>
         </tr>`).join('');
+        updateSiswaSelectionUI();
     }
 
     // --- DATA GURU ---
@@ -7942,7 +7956,55 @@ function processImportLibur(data, inputElement) {
 // FITUR DOWNLOAD KARTU MASSAL (BULK)
 // ====================================
 // 
-async function downloadKartuSiswaBulk() {
+// ====================================
+// PILIH SISWA UNTUK CETAK KARTU
+// ====================================
+const siswaSelected = new Set(); // NISN yang dipilih; bertahan saat pindah halaman / filter
+
+function toggleSiswaSelect(nisn, checked) {
+    nisn = String(nisn);
+    if (checked) siswaSelected.add(nisn); else siswaSelected.delete(nisn);
+    updateSiswaSelectionUI();
+}
+
+// Centang header = pilih SEMUA hasil filter/pencarian (semua halaman), bukan hanya halaman yang tampil
+function toggleSiswaSelectAll(checked) {
+    (tableState.siswa.filtered || []).forEach(s => {
+        if (checked) siswaSelected.add(String(s.nisn)); else siswaSelected.delete(String(s.nisn));
+    });
+    document.querySelectorAll('#tbody-siswa .chk-siswa').forEach(cb => { cb.checked = checked; });
+    updateSiswaSelectionUI();
+}
+
+function clearSiswaSelection() {
+    siswaSelected.clear();
+    document.querySelectorAll('#tbody-siswa .chk-siswa').forEach(cb => { cb.checked = false; });
+    updateSiswaSelectionUI();
+}
+
+function updateSiswaSelectionUI() {
+    // Buang pilihan siswa yang sudah tidak ada (misal sudah dihapus / naik kelas jadi lulus)
+    const full = tableState.siswa.fullData || [];
+    if (full.length) {
+        const valid = new Set(full.map(s => String(s.nisn)));
+        Array.from(siswaSelected).forEach(n => { if (!valid.has(n)) siswaSelected.delete(n); });
+    }
+    const bar = document.getElementById('barSiswaTerpilih');
+    const cnt = document.getElementById('jumlahSiswaTerpilih');
+    if (cnt) cnt.textContent = siswaSelected.size;
+    if (bar) bar.classList.toggle('hidden', siswaSelected.size === 0);
+
+    const chkAll = document.getElementById('chkSiswaAll');
+    if (chkAll) {
+        const filtered = tableState.siswa.filtered || [];
+        const nSel = filtered.filter(s => siswaSelected.has(String(s.nisn))).length;
+        chkAll.checked = filtered.length > 0 && nSel === filtered.length;
+        chkAll.indeterminate = nSel > 0 && nSel < filtered.length;
+    }
+}
+
+// onlySelected: true = langsung cetak yang dipilih; kosong = tanya dulu bila ada siswa dipilih
+async function downloadKartuSiswaBulk(onlySelected) {
     // 1. Cek Filter & Data
     const filterKelas = document.getElementById('filterKelasSiswa').value;
     // Pastikan tableState.siswa.fullData ada
@@ -7953,9 +8015,30 @@ async function downloadKartuSiswaBulk() {
         return;
     }
 
-    // 2. Filter Data
+    // 2. Tentukan mode: siswa terpilih atau semua (sesuai filter kelas)
+    let modeCetak = 'filter';
+    if (onlySelected === true) {
+        modeCetak = 'selected';
+    } else if (siswaSelected.size > 0) {
+        const pilihan = await Swal.fire({
+            title: 'Cetak Kartu Pelajar',
+            html: `Ada <b>${siswaSelected.size}</b> siswa yang dipilih.`,
+            icon: 'question',
+            showDenyButton: true,
+            showCancelButton: true,
+            confirmButtonText: `Cetak ${siswaSelected.size} terpilih`,
+            denyButtonText: filterKelas ? `Semua kelas ${filterKelas}` : 'Semua siswa',
+            cancelButtonText: 'Batal'
+        });
+        if (pilihan.isDismissed) return;
+        modeCetak = pilihan.isConfirmed ? 'selected' : 'filter';
+    }
+
+    // 3. Filter Data
     let dataToPrint = allSiswa;
-    if (filterKelas && filterKelas !== "") {
+    if (modeCetak === 'selected') {
+        dataToPrint = allSiswa.filter(s => siswaSelected.has(String(s.nisn)));
+    } else if (filterKelas && filterKelas !== "") {
         dataToPrint = allSiswa.filter(s => s.kelas === filterKelas);
     }
 
@@ -7967,7 +8050,7 @@ async function downloadKartuSiswaBulk() {
     // Konfirmasi
     const result = await Swal.fire({
         title: 'Cetak Kartu Pelajar',
-        text: `Mencetak ${dataToPrint.length} kartu. Layout: 8 Kartu per Halaman (A4).`,
+        text: `Mencetak ${dataToPrint.length} kartu${modeCetak === 'selected' ? ' (siswa terpilih)' : ''}. Layout: 8 Kartu per Halaman (A4).`,
         icon: 'info',
         showCancelButton: true,
         confirmButtonText: 'Cetak Sekarang',
@@ -8143,7 +8226,9 @@ async function downloadKartuSiswaBulk() {
             // Bersihkan elemen temp
             document.body.removeChild(tempDiv);
             
-            const fileName = filterKelas ? `Kartu_${filterKelas}.pdf` : `Kartu_Semua_Siswa.pdf`;
+            const fileName = modeCetak === 'selected'
+                ? `Kartu_Terpilih_${dataToPrint.length}_Siswa.pdf`
+                : (filterKelas ? `Kartu_${filterKelas}.pdf` : `Kartu_Semua_Siswa.pdf`);
             doc.save(fileName);
 
             Swal.fire({
