@@ -1937,6 +1937,154 @@
 
     </div>
 </div>
+              <!-- ===================== CETAK ULANG KARTU (ADMIN) ===================== -->
+              <div id="view-cetak-ulang" class="view-section animate-fade-in hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+                  <!-- KIRI -->
+                  <div class="lg:col-span-1 space-y-6">
+
+                    <!-- Catat pembayaran -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                      <div class="p-5 border-b border-gray-100 bg-indigo-50">
+                        <div class="flex items-center gap-3">
+                          <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center"><i class="fas fa-receipt"></i></div>
+                          <div>
+                            <h3 class="font-bold text-gray-800 text-sm">Catat Pembayaran Cetak Ulang</h3>
+                            <p class="text-[11px] text-gray-500 mt-0.5">Untuk siswa yang kartunya hilang</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="p-5 space-y-4">
+                        <div>
+                          <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Cari Siswa</label>
+                          <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 text-sm"></i>
+                            <input type="text" id="cuCari" autocomplete="off" placeholder="Ketik nama atau NISN (min. 2 huruf)"
+                              oninput="cuCariDebounce()"
+                              class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white outline-none transition">
+                          </div>
+                          <div id="cuHasil" class="hidden mt-2 border border-gray-200 rounded-xl overflow-y-auto bg-white" style="max-height:16rem"></div>
+                        </div>
+
+                        <div id="cuPanel" class="hidden space-y-4">
+                          <div class="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+                            <div class="flex items-start justify-between gap-3">
+                              <div class="min-w-0">
+                                <p id="cuNama" class="font-bold text-gray-800 truncate"></p>
+                                <p id="cuMeta" class="text-xs text-gray-500 mt-0.5"></p>
+                              </div>
+                              <button type="button" onclick="cuReset()" title="Ganti siswa"
+                                class="w-7 h-7 shrink-0 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-white transition"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div class="mt-3 flex items-end justify-between gap-3">
+                              <div>
+                                <p class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Denda cetak ulang ke-<span id="cuKe"></span></p>
+                                <p id="cuDenda" class="text-2xl font-black text-indigo-700 leading-tight"></p>
+                              </div>
+                              <span id="cuBadgeRiwayat" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white border border-indigo-100 text-indigo-700 whitespace-nowrap"></span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Nominal Dibayar (Rp)</label>
+                            <input type="number" id="cuDibayar" min="0" step="500" inputmode="numeric" oninput="cuCekBeda()"
+                              class="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-800 bg-gray-50 focus:bg-white outline-none transition">
+                          </div>
+                          <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Catatan <span class="normal-case font-medium text-gray-400">(opsional)</span></label>
+                            <input type="text" id="cuCatatan" maxlength="120" placeholder="Contoh: dibayar orang tua"
+                              class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-gray-50 focus:bg-white outline-none transition">
+                          </div>
+                          <p id="cuHintBeda" class="hidden text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                            <i class="fas fa-info-circle mr-1"></i>Nominal berbeda dari denda standar. Catatan alasan wajib diisi.
+                          </p>
+                          <button type="button" id="cuBtnSimpan" onclick="cuSimpan()"
+                            class="w-full py-3 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center gap-2 transition active:scale-95">
+                            <i class="fas fa-save"></i> Simpan Pembayaran
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Pengaturan denda -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                      <div class="p-5 border-b border-gray-100">
+                        <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2"><i class="fas fa-sliders-h text-indigo-600"></i> Pengaturan Denda</h3>
+                        <p class="text-[11px] text-gray-500 mt-1">Atur denda tiap urutan cetak ulang. Tingkat terakhir berlaku untuk cetak ulang berikutnya dan seterusnya.</p>
+                      </div>
+                      <div class="p-5">
+                        <div id="cuTierList" class="space-y-3"></div>
+                        <div class="flex gap-2 mt-4">
+                          <button type="button" onclick="cuTierAdd()"
+                            class="flex-1 py-2.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition"><i class="fas fa-plus mr-1"></i> Tambah Tingkat</button>
+                          <button type="button" id="cuBtnSimpanDenda" onclick="cuSimpanDenda()"
+                            class="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition"><i class="fas fa-check mr-1"></i> Simpan</button>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-3">Perubahan hanya berlaku untuk pembayaran berikutnya; riwayat lama tidak berubah.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- KANAN -->
+                  <div class="lg:col-span-2 space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Transaksi</p>
+                        <p id="cuStatTrx" class="text-3xl font-black text-gray-800 mt-1">—</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">pada periode terpilih</p>
+                      </div>
+                      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Total Diterima</p>
+                        <p id="cuStatTotal" class="text-3xl font-black text-indigo-700 mt-1">—</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">tidak termasuk yang dibatalkan</p>
+                      </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                      <div class="p-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <h3 class="font-bold text-gray-800">Riwayat Pembayaran</h3>
+                          <p class="text-xs text-gray-500 mt-0.5">Daftar cetak ulang kartu yang sudah dibayar.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                          <button type="button" onclick="cuExport()" class="flex items-center gap-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-2 rounded-lg hover:bg-indigo-100 transition"><i class="fas fa-file-excel"></i> Excel</button>
+                          <button type="button" onclick="cuLoadRiwayat()" class="flex items-center gap-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-2 rounded-lg hover:bg-indigo-100 transition"><i class="fas fa-sync-alt"></i> Refresh</button>
+                        </div>
+                      </div>
+                      <div class="p-4 border-b border-gray-100 flex flex-wrap gap-3">
+                        <div class="flex items-center gap-2">
+                          <input type="month" id="cuBulan" onchange="cuLoadRiwayat()" class="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-gray-50 outline-none">
+                          <button type="button" onclick="document.getElementById('cuBulan').value='';cuLoadRiwayat()" class="text-xs font-bold text-gray-500 hover:text-indigo-700 px-2 py-2">Semua</button>
+                        </div>
+                        <div class="relative flex-1 min-w-[10rem]">
+                          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 text-sm"></i>
+                          <input type="text" id="cuFilter" placeholder="Filter nama, NISN, kelas, atau ID..." oninput="cuRenderRiwayat()"
+                            class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white outline-none transition">
+                        </div>
+                      </div>
+                      <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                          <thead class="bg-gray-50 text-[10px] uppercase tracking-wider text-gray-500">
+                            <tr>
+                              <th class="px-4 py-3 font-bold">Waktu</th>
+                              <th class="px-4 py-3 font-bold">Siswa</th>
+                              <th class="px-4 py-3 font-bold text-center">Ke-</th>
+                              <th class="px-4 py-3 font-bold text-right">Denda</th>
+                              <th class="px-4 py-3 font-bold text-right">Dibayar</th>
+                              <th class="px-4 py-3 font-bold">Catatan</th>
+                              <th class="px-4 py-3 font-bold text-center">Aksi</th>
+                            </tr>
+                          </thead>
+                          <tbody id="cuTbody" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
               <div id="view-scanner" class="view-section animate-fade-in">
                   <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 max-w-6xl mx-auto items-start">
 
@@ -2079,7 +2227,7 @@
     // 0. KONFIGURASI BACKEND GOOGLE APPS SCRIPT (UNTUK HOSTING GITHUB PAGES)
     // ==========================================================================
     // GANTI URL DI BAWAH DENGAN URL WEB APP DEPLOYMENT GOOGLE APPS SCRIPT ANDA
-    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbykjkTy6rK-GwqWrZNJMYeaULwdvRaOCJF1Y5RYOZ5Mxk-ojjxUhA_gFKYMnzYW6MtsiQ/exec";
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzfBxX5TJGWBEMmXjktmEZWX1VoZLFajUE9fzyRsY4y0YyvonyfOZ2tQ_J5b42HQzvnww/exec";
 
     // Polyfill google.script.run agar dapat berjalan di luar domain Google (GitHub Pages)
     if (typeof google === 'undefined' || !google.script || !google.script.run) {
@@ -2341,6 +2489,7 @@ function processTableData(type) {
             case 'view-monitoring': title = "Monitoring Realtime"; break;
             case 'view-rekap-absensi': title = "Laporan Kehadiran"; break;
             case 'view-kartu-siswa': title = "Kartu Pelajar Digital"; break;
+            case 'view-cetak-ulang': title = "Cetak Ulang Kartu"; break;
         }
         document.getElementById('pageTitle').textContent = title;
         closeSidebarMobile();
@@ -2559,6 +2708,7 @@ function initDashboard() {
         menuHTML += createItem('Kenaikan Kelas', 'fa-level-up-alt', 'loadKenaikanKelas()');
         menuHTML += createItem('Kelola Absen', 'fa-calendar-times', 'loadKelolaAbsen()');
         menuHTML += createItem('Manajemen Kelas', 'fa-th-large', 'loadManajemenKelas()'); 
+        menuHTML += createItem('Cetak Ulang Kartu', 'fa-receipt', 'loadCetakUlang()');
         menuHTML += createItem('Daftar Hadir', 'fa-clipboard-check', 'loadDaftarHadirGuru()');
         menuHTML += createItem('Absensi Sholat', 'fa-mosque', 'loadAbsensiSholat()');
         
@@ -8419,6 +8569,389 @@ function handleArchiveAndReset() {
       const ws  = XLSX.utils.aoa_to_sheet(rows);
       XLSX.utils.book_append_sheet(wb, ws, 'Rekap Sholat');
       XLSX.writeFile(wb, `Rekap_Sholat_${document.getElementById('sholatRekapBulan').value || 'semua'}.xlsx`);
+    }
+
+    // ==========================================================================
+    // CETAK ULANG KARTU — PEMBAYARAN & DENDA BERTINGKAT (ADMIN)
+    // ==========================================================================
+    let cuTiers = [];        // denda per tingkat: indeks 0 = cetak ulang ke-1
+    let cuHasilList = [];    // hasil pencarian siswa
+    let cuSelected = null;   // siswa terpilih
+    let cuRiwayat = [];      // riwayat dari server
+    let cuTimer = null;
+    let cuReqSeq = 0;
+
+    const cuRp = n => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
+    const cuEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const cuTgl = s => { const p = String(s || '').split('-'); return p.length === 3 ? p[2] + '-' + p[1] + '-' + p[0] : (s || '-'); };
+    const cuToken = () => (currentUser ? currentUser.token : null);
+
+    function loadCetakUlang() {
+        setActiveMenu('Cetak Ulang Kartu');
+        showView('view-cetak-ulang');
+        const bulan = document.getElementById('cuBulan');
+        if (!bulan.value && !bulan.dataset.init) {
+            const d = new Date();
+            bulan.value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+            bulan.dataset.init = '1';
+        }
+        cuLoadDenda();
+        cuLoadRiwayat();
+    }
+
+    // ---------------- PENGATURAN DENDA ----------------
+    function cuLoadDenda() {
+        google.script.run
+            .withSuccessHandler(res => {
+                if (!res || !res.success) { showAlert('error', (res && res.message) || 'Gagal memuat pengaturan denda.'); return; }
+                cuTiers = res.data || [];
+                cuRenderTiers();
+            })
+            .withFailureHandler(err => showAlert('error', 'Gagal memuat pengaturan denda: ' + err))
+            .getDendaCetakUlang(cuToken());
+    }
+
+    function cuRenderTiers() {
+        const n = cuTiers.length;
+        document.getElementById('cuTierList').innerHTML = cuTiers.map((v, i) => {
+            const label = 'Cetak ulang ke-' + (i + 1) + (i === n - 1 ? ' dan seterusnya' : '');
+            const hapus = (i === n - 1 && n > 1)
+                ? `<button type="button" onclick="cuTierRemove()" title="Hapus tingkat ini" class="w-9 h-9 shrink-0 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition"><i class="fas fa-trash-alt text-xs"></i></button>`
+                : '';
+            return `
+            <div>
+              <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">${label}</label>
+              <div class="flex items-center gap-2">
+                <div class="relative flex-1">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">Rp</span>
+                  <input type="number" min="0" step="500" inputmode="numeric" value="${v}" oninput="cuTierChange(${i}, this.value)"
+                    class="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm font-bold text-gray-800 bg-gray-50 focus:bg-white outline-none transition">
+                </div>
+                ${hapus}
+              </div>
+            </div>`;
+        }).join('');
+    }
+
+    function cuTierChange(i, val) { cuTiers[i] = (val === '' ? '' : Number(val)); }
+
+    function cuTierAdd() {
+        if (cuTiers.length >= 20) { showAlert('warning', 'Maksimal 20 tingkat.'); return; }
+        const last = cuTiers.length ? Number(cuTiers[cuTiers.length - 1]) || 0 : 0;
+        cuTiers.push(last);
+        cuRenderTiers();
+    }
+
+    function cuTierRemove() {
+        if (cuTiers.length <= 1) return;
+        cuTiers.pop();
+        cuRenderTiers();
+    }
+
+    function cuSimpanDenda() {
+        for (let i = 0; i < cuTiers.length; i++) {
+            const n = Number(cuTiers[i]);
+            if (cuTiers[i] === '' || !isFinite(n) || n < 0) {
+                Swal.fire('Periksa input', 'Denda cetak ulang ke-' + (i + 1) + ' belum diisi dengan benar.', 'warning');
+                return;
+            }
+        }
+        const btn = document.getElementById('cuBtnSimpanDenda');
+        btn.disabled = true;
+        google.script.run
+            .withSuccessHandler(res => {
+                btn.disabled = false;
+                if (!res || !res.success) { Swal.fire('Gagal', (res && res.message) || 'Gagal menyimpan.', 'error'); return; }
+                cuTiers = res.data || cuTiers;
+                cuRenderTiers();
+                showAlert('success', res.message);
+                cuRefreshSelected();
+            })
+            .withFailureHandler(err => { btn.disabled = false; Swal.fire('Error', String(err), 'error'); })
+            .saveDendaCetakUlang(cuToken(), cuTiers.map(Number));
+    }
+
+    // ---------------- CARI & PILIH SISWA ----------------
+    function cuCariDebounce() {
+        clearTimeout(cuTimer);
+        cuTimer = setTimeout(cuCariSiswa, 350);
+    }
+
+    function cuCariSiswa() {
+        const q = document.getElementById('cuCari').value.trim();
+        const box = document.getElementById('cuHasil');
+        const seq = ++cuReqSeq;
+        if (q.length < 2) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+
+        box.classList.remove('hidden');
+        box.innerHTML = '<div class="px-4 py-3 text-xs text-gray-400"><i class="fas fa-circle-notch fa-spin mr-1"></i> Mencari...</div>';
+
+        google.script.run
+            .withSuccessHandler(res => {
+                if (seq !== cuReqSeq) return; // abaikan respons lama
+                if (!res || !res.success) { box.innerHTML = `<div class="px-4 py-3 text-xs text-red-500">${cuEsc((res && res.message) || 'Gagal mencari.')}</div>`; return; }
+                cuHasilList = res.data || [];
+                if (!cuHasilList.length) { box.innerHTML = '<div class="px-4 py-3 text-xs text-gray-400 italic">Siswa tidak ditemukan.</div>'; return; }
+                box.innerHTML = cuHasilList.map((s, i) => `
+                  <button type="button" onclick="cuPilih(${i})" class="w-full text-left px-4 py-2.5 hover:bg-indigo-50 border-b border-gray-50 last:border-none transition flex items-center justify-between gap-3">
+                    <span class="min-w-0">
+                      <span class="block text-sm font-semibold text-gray-800 truncate">${cuEsc(s.nama)}</span>
+                      <span class="block text-[11px] text-gray-400">${cuEsc(s.kelas)} · ${cuEsc(s.nisn)}</span>
+                    </span>
+                    <span class="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-full whitespace-nowrap">Ke-${s.ke} · ${cuRp(s.denda)}</span>
+                  </button>`).join('');
+            })
+            .withFailureHandler(err => { if (seq === cuReqSeq) box.innerHTML = `<div class="px-4 py-3 text-xs text-red-500">Gagal: ${cuEsc(err)}</div>`; })
+            .cariSiswaCetakUlang(cuToken(), q);
+    }
+
+    function cuPilih(i) {
+        cuSelected = cuHasilList[i];
+        if (!cuSelected) return;
+        document.getElementById('cuHasil').classList.add('hidden');
+        document.getElementById('cuCari').value = cuSelected.nama;
+        document.getElementById('cuCatatan').value = '';
+        cuRenderSelected(true);
+    }
+
+    function cuRenderSelected(resetNominal) {
+        const s = cuSelected;
+        if (!s) return;
+        document.getElementById('cuPanel').classList.remove('hidden');
+        document.getElementById('cuNama').textContent = s.nama;
+        document.getElementById('cuMeta').textContent = s.kelas + ' · NISN ' + s.nisn;
+        document.getElementById('cuKe').textContent = s.ke;
+        document.getElementById('cuDenda').textContent = cuRp(s.denda);
+        document.getElementById('cuBadgeRiwayat').textContent = s.jumlahCetak === 0 ? 'Belum pernah cetak ulang' : 'Sudah ' + s.jumlahCetak + '× cetak ulang';
+        if (resetNominal) document.getElementById('cuDibayar').value = s.denda;
+        cuCekBeda();
+    }
+
+    // Setelah pengaturan denda berubah, segarkan denda siswa yang sedang dipilih
+    function cuRefreshSelected() {
+        if (!cuSelected) return;
+        const nisn = cuSelected.nisn;
+        google.script.run
+            .withSuccessHandler(res => {
+                if (!res || !res.success) return;
+                const f = (res.data || []).filter(x => x.nisn === nisn)[0];
+                if (f && cuSelected && cuSelected.nisn === nisn) { cuSelected = f; cuRenderSelected(true); }
+            })
+            .withFailureHandler(() => {})
+            .cariSiswaCetakUlang(cuToken(), nisn);
+    }
+
+    function cuCekBeda() {
+        const hint = document.getElementById('cuHintBeda');
+        if (!cuSelected) { hint.classList.add('hidden'); return; }
+        const v = document.getElementById('cuDibayar').value;
+        hint.classList.toggle('hidden', v === '' ? false : Number(v) === cuSelected.denda);
+        if (v === '') hint.classList.add('hidden');
+    }
+
+    function cuReset() {
+        cuSelected = null;
+        document.getElementById('cuPanel').classList.add('hidden');
+        document.getElementById('cuHasil').classList.add('hidden');
+        document.getElementById('cuCari').value = '';
+        document.getElementById('cuCatatan').value = '';
+        document.getElementById('cuDibayar').value = '';
+    }
+
+    // ---------------- SIMPAN PEMBAYARAN ----------------
+    function cuSimpan() {
+        if (!cuSelected) return;
+        const s = cuSelected;
+        const raw = document.getElementById('cuDibayar').value;
+        const dibayar = Number(raw);
+        const catatan = document.getElementById('cuCatatan').value.trim();
+
+        if (raw === '' || !isFinite(dibayar) || dibayar < 0) {
+            Swal.fire('Periksa input', 'Nominal dibayar belum diisi dengan benar.', 'warning');
+            return;
+        }
+        if (dibayar !== s.denda && !catatan) {
+            Swal.fire('Catatan wajib diisi', 'Nominal berbeda dari denda standar (' + cuRp(s.denda) + '). Tulis alasannya di kolom catatan.', 'warning');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Simpan pembayaran?',
+            html: `<b>${cuEsc(s.nama)}</b> (${cuEsc(s.kelas)})<br>Cetak ulang ke-${s.ke}<br>Dibayar <b>${cuRp(dibayar)}</b>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, simpan',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#1F6B57'
+        }).then(r => {
+            if (!r.isConfirmed) return;
+            showLoading();
+            google.script.run
+                .withSuccessHandler(res => {
+                    hideLoading();
+                    if (!res || !res.success) { Swal.fire('Gagal', (res && res.message) || 'Gagal menyimpan.', 'error'); return; }
+                    const d = res.data;
+                    cuReset();
+                    cuLoadRiwayat();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Tersimpan',
+                        html: `${cuEsc(d.nama)} — cetak ulang ke-${d.ke}<br><b>${cuRp(d.dibayar)}</b> &nbsp;<span style="color:#94a3b8;font-size:12px">(${cuEsc(d.id)})</span>`,
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="fas fa-print"></i> Cetak Kuitansi',
+                        cancelButtonText: 'Tutup',
+                        confirmButtonColor: '#1F6B57'
+                    }).then(r2 => { if (r2.isConfirmed) cuKuitansi(d); });
+                })
+                .withFailureHandler(err => { hideLoading(); Swal.fire('Error', String(err), 'error'); })
+                .catatCetakUlang(cuToken(), s.nisn, s.ke, dibayar, catatan);
+        });
+    }
+
+    // ---------------- RIWAYAT ----------------
+    function cuLoadRiwayat() {
+        const bulan = document.getElementById('cuBulan').value || '';
+        document.getElementById('cuTbody').innerHTML =
+            '<tr><td colspan="7" class="py-10 text-center text-gray-400 text-sm"><i class="fas fa-circle-notch fa-spin mr-2"></i>Memuat riwayat...</td></tr>';
+        google.script.run
+            .withSuccessHandler(res => {
+                if (!res || !res.success) {
+                    document.getElementById('cuTbody').innerHTML = `<tr><td colspan="7" class="py-10 text-center text-red-400 text-sm">${cuEsc((res && res.message) || 'Gagal memuat.')}</td></tr>`;
+                    return;
+                }
+                cuRiwayat = res.data || [];
+                cuRenderRiwayat();
+            })
+            .withFailureHandler(err => {
+                document.getElementById('cuTbody').innerHTML = `<tr><td colspan="7" class="py-10 text-center text-red-400 text-sm">Gagal: ${cuEsc(err)}</td></tr>`;
+            })
+            .getRiwayatCetakUlang(cuToken(), bulan);
+    }
+
+    function cuFiltered() {
+        const q = (document.getElementById('cuFilter').value || '').trim().toLowerCase();
+        if (!q) return cuRiwayat;
+        return cuRiwayat.filter(x => (x.nama + ' ' + x.nisn + ' ' + x.kelas + ' ' + x.id).toLowerCase().indexOf(q) !== -1);
+    }
+
+    function cuRenderRiwayat() {
+        const rows = cuFiltered();
+        const sah = rows.filter(x => x.status !== 'Dibatalkan');
+        document.getElementById('cuStatTrx').textContent = sah.length;
+        document.getElementById('cuStatTotal').textContent = cuRp(sah.reduce((a, x) => a + x.dibayar, 0));
+
+        const tb = document.getElementById('cuTbody');
+        if (!rows.length) {
+            tb.innerHTML = '<tr><td colspan="7" class="py-10 text-center text-gray-400 text-sm">Belum ada pembayaran pada periode ini.</td></tr>';
+            return;
+        }
+        tb.innerHTML = rows.map(x => {
+            const batal = x.status === 'Dibatalkan';
+            const aksi = batal
+                ? '<span class="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded-full">Dibatalkan</span>'
+                : `<div class="flex items-center justify-center gap-1">
+                     <button type="button" onclick="cuKuitansiById('${cuEsc(x.id)}')" title="Cetak kuitansi" class="w-8 h-8 rounded-lg text-indigo-600 hover:bg-indigo-50 transition"><i class="fas fa-print text-xs"></i></button>
+                     <button type="button" onclick="cuBatal('${cuEsc(x.id)}')" title="Batalkan transaksi" class="w-8 h-8 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition"><i class="fas fa-ban text-xs"></i></button>
+                   </div>`;
+            return `
+            <tr class="${batal ? 'opacity-60' : ''}">
+              <td class="px-4 py-3 whitespace-nowrap"><div class="text-xs font-semibold text-gray-700">${cuTgl(x.tanggal)}</div><div class="text-[10px] text-gray-400">${cuEsc(String(x.jam).substring(0, 5))} · ${cuEsc(x.id)}</div></td>
+              <td class="px-4 py-3"><div class="font-semibold text-gray-800 ${batal ? 'line-through' : ''}">${cuEsc(x.nama)}</div><div class="text-[11px] text-gray-400">${cuEsc(x.kelas)} · ${cuEsc(x.nisn)}</div></td>
+              <td class="px-4 py-3 text-center"><span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-full">${x.ke}</span></td>
+              <td class="px-4 py-3 text-right text-xs text-gray-500 whitespace-nowrap">${cuRp(x.denda)}</td>
+              <td class="px-4 py-3 text-right font-bold text-gray-800 whitespace-nowrap ${batal ? 'line-through' : ''}">${cuRp(x.dibayar)}</td>
+              <td class="px-4 py-3 text-xs text-gray-500 max-w-[14rem]"><div class="truncate" title="${cuEsc(x.catatan)}">${cuEsc(x.catatan) || '-'}</div><div class="text-[10px] text-gray-400">oleh ${cuEsc(x.oleh)}</div></td>
+              <td class="px-4 py-3 text-center">${aksi}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function cuBatal(id) {
+        Swal.fire({
+            title: 'Batalkan transaksi ' + id + '?',
+            text: 'Transaksi tidak dihapus, hanya ditandai dibatalkan dan tidak dihitung lagi.',
+            icon: 'warning',
+            input: 'text',
+            inputPlaceholder: 'Alasan pembatalan',
+            inputValidator: v => (!v || !v.trim()) ? 'Alasan pembatalan wajib diisi.' : null,
+            showCancelButton: true,
+            confirmButtonText: 'Ya, batalkan',
+            cancelButtonText: 'Kembali',
+            confirmButtonColor: '#991B1B'
+        }).then(r => {
+            if (!r.isConfirmed) return;
+            showLoading();
+            google.script.run
+                .withSuccessHandler(res => {
+                    hideLoading();
+                    if (!res || !res.success) { Swal.fire('Gagal', (res && res.message) || 'Gagal membatalkan.', 'error'); return; }
+                    showAlert('success', res.message);
+                    cuLoadRiwayat();
+                    cuRefreshSelected();
+                })
+                .withFailureHandler(err => { hideLoading(); Swal.fire('Error', String(err), 'error'); })
+                .batalCetakUlang(cuToken(), id, r.value.trim());
+        });
+    }
+
+    // ---------------- KUITANSI ----------------
+    function cuKuitansiById(id) {
+        const d = cuRiwayat.filter(x => x.id === id)[0];
+        if (d) cuKuitansi(d);
+    }
+
+    function cuKuitansi(d) {
+        const w = window.open('', '_blank', 'width=440,height=680');
+        if (!w) { Swal.fire('Popup diblokir', 'Izinkan popup untuk situs ini agar kuitansi bisa dicetak.', 'info'); return; }
+        const sekolah = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.school) ? APP_CONFIG.school : '';
+        const baris = (k, v) => `<tr><td class="k">${k}</td><td class="v">${cuEsc(v)}</td></tr>`;
+        w.document.write(`<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>Kuitansi ${cuEsc(d.id)}</title>
+          <style>
+            body{font-family:Arial,Helvetica,sans-serif;color:#17231F;margin:0;padding:24px;font-size:13px}
+            .box{max-width:360px;margin:0 auto;border:1.5px solid #17231F;padding:18px 20px}
+            h1{font-size:15px;margin:0;text-align:center;letter-spacing:.5px}
+            .sub{text-align:center;font-size:11px;color:#555;margin:2px 0 12px}
+            hr{border:0;border-top:1px dashed #999;margin:12px 0}
+            table{width:100%;border-collapse:collapse}
+            td{padding:4px 0;vertical-align:top}
+            .k{width:42%;color:#555}.v{font-weight:600}
+            .total{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:800;margin-top:4px}
+            .ttd{display:flex;justify-content:flex-end;margin-top:22px;text-align:center;font-size:12px}
+            .ttd div{width:140px}.ttd .sp{height:48px}
+            .foot{text-align:center;font-size:10px;color:#777;margin-top:14px}
+            @media print{body{padding:0}.box{border:1.5px solid #000}}
+          </style></head><body><div class="box">
+            <h1>BUKTI PEMBAYARAN</h1>
+            <div class="sub">Cetak Ulang Kartu Pelajar &middot; ${cuEsc(sekolah)}</div>
+            <hr>
+            <table>
+              ${baris('No. Transaksi', d.id)}
+              ${baris('Tanggal', cuTgl(d.tanggal) + ' ' + String(d.jam).substring(0, 5))}
+              ${baris('Nama Siswa', d.nama)}
+              ${baris('Kelas', d.kelas)}
+              ${baris('NISN', d.nisn)}
+              ${baris('Cetak Ulang Ke-', String(d.ke))}
+              ${d.catatan ? baris('Catatan', d.catatan) : ''}
+            </table>
+            <hr>
+            <div class="total"><span>Dibayar</span><span>${cuEsc(cuRp(d.dibayar))}</span></div>
+            <div class="ttd"><div>Petugas,<div class="sp"></div>${cuEsc(d.oleh)}</div></div>
+            <div class="foot">Simpan bukti ini sebagai tanda terima.</div>
+          </div></body></html>`);
+        w.document.close();
+        w.focus();
+        setTimeout(() => w.print(), 350);
+    }
+
+    // ---------------- EXPORT EXCEL ----------------
+    function cuExport() {
+        const rows = cuFiltered();
+        if (!rows.length) { Swal.fire('Info', 'Tidak ada data untuk diekspor.', 'info'); return; }
+        const aoa = [['ID', 'Tanggal', 'Jam', 'NISN', 'Nama', 'Kelas', 'Cetak Ulang Ke-', 'Denda Standar', 'Dibayar', 'Catatan', 'Dicatat Oleh', 'Status']];
+        rows.forEach(x => aoa.push([x.id, x.tanggal, x.jam, x.nisn, x.nama, x.kelas, x.ke, x.denda, x.dibayar, x.catatan, x.oleh, x.status]));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Cetak Ulang Kartu');
+        XLSX.writeFile(wb, 'Cetak_Ulang_Kartu_' + (document.getElementById('cuBulan').value || 'semua') + '.xlsx');
     }
 
     checkSession();
